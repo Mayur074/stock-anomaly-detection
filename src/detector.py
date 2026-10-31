@@ -118,7 +118,7 @@ def update_model(ticker: str, window: deque) -> tuple[bool, float] | None:
     label    = model.predict(latest)[0]          # -1 = anomaly, 1 = normal
     score    = model.score_samples(latest)[0]    # lower = more anomalous
 
-    is_anomaly = label == ANOMALY_LABEL
+    is_anomaly = bool(label == ANOMALY_LABEL)  # plain bool: psycopg2 can't store numpy.bool_
     return is_anomaly, float(score)
 
 

@@ -38,30 +38,31 @@ def get_conn():
 
 def load_data(ticker: str | None = None, limit: int = 500) -> pd.DataFrame:
     conn = get_conn()
-    where = f"WHERE ticker = '{ticker}'" if ticker else ""
+    where = "WHERE ticker = %(ticker)s" if ticker else ""
     sql = f"""
         SELECT ticker, ts, close, pct_return, anomaly, score
         FROM price_events
         {where}
         ORDER BY ts DESC
-        LIMIT {limit}
+        LIMIT %(limit)s
     """
-    df = pd.read_sql(sql, conn)
-    df["ts"] = pd.to_datetime(df["ts"])
+    df = pd.read_sql(sql, conn, params={"ticker": ticker, "limit": limit})
+    df["ts"] = pd.to_datetime(df["ts"], utc=True)
     return df.sort_values("ts")
 
 
-def load_anomalies(limit: int = 50) -> pd.DataFrame:
+def load_anomalies(ticker: str | None = None, limit: int = 50) -> pd.DataFrame:
     conn = get_conn()
+    ticker_clause = "AND ticker = %(ticker)s" if ticker else ""
     sql = f"""
         SELECT ticker, ts, close, pct_return, score
         FROM price_events
-        WHERE anomaly = TRUE
+        WHERE anomaly = TRUE {ticker_clause}
         ORDER BY ts DESC
-        LIMIT {limit}
+        LIMIT %(limit)s
     """
-    df = pd.read_sql(sql, conn)
-    df["ts"] = pd.to_datetime(df["ts"])
+    df = pd.read_sql(sql, conn, params={"ticker": ticker, "limit": limit})
+    df["ts"] = pd.to_datetime(df["ts"], utc=True)
     return df
 
 
@@ -79,7 +80,7 @@ auto_refresh = st.sidebar.checkbox("Auto refresh", value=True)
 # ── KPI row ───────────────────────────────────────────────────────────────────
 ticker_filter = None if selected == "ALL" else selected
 df = load_data(ticker_filter, lookback)
-anomalies = load_anomalies()
+anomalies = load_anomalies(ticker_filter)
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Total Events", f"{len(df):,}")

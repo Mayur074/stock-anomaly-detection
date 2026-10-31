@@ -38,7 +38,7 @@ yfinance / Live Feed
 
 ### 1. Clone and install
 ```bash
-git clone https://github.com/yourgithub/stock-anomaly-detection.git
+git clone https://github.com/Mayur074/stock-anomaly-detection.git
 cd stock-anomaly-detection
 pip install -r requirements.txt
 ```
